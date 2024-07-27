@@ -1,5 +1,7 @@
-﻿using System;
+﻿using ChessProject.Services;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,12 +19,14 @@ namespace ChessProject.Classes
         internal  Position? m_Position { get; set; }
         internal eColor? m_Color { get; set; }
         
-        internal abstract bool CheckMove(Position i_newPosition);
+        internal abstract bool CheckMove(Position i_newPosition,int i_diffRow,int i_diffColumn);
 
         internal  bool Move(Position i_newPosition)
         {
             bool validMove = false;
-            if(CheckMove(i_newPosition))
+            int diffRow = this.m_Position.m_Row - i_newPosition.m_Row;
+            int diffColumn = this.m_Position.m_Column - i_newPosition.m_Column;
+            if (CheckMove(i_newPosition,diffRow,diffColumn))
             {
                 m_Position = i_newPosition;
                 validMove = true;
@@ -41,22 +45,18 @@ namespace ChessProject.Classes
     internal class King : ChessPiece
     {
 
-        internal override bool CheckMove(Position i_newPosition)
+        internal override bool CheckMove(Position i_newPosition, int i_diffRow, int i_diffColumn)
         {
             bool validMove = false;
-            int differenceRow = this.m_Position.m_Row - i_newPosition.m_Row;
-            int differenceColumn = this.m_Position.m_Column - i_newPosition.m_Column;
-            //There are 2 cases - differenceRow = 1/-1 and differenceColumn=0, king move left or right
-            //or differenceRow = 0 and differenceColumn=1/-1, king moves up or down
-            if ((differenceRow == 1 || differenceRow == -1) && differenceColumn == 0 )
+            if((i_diffRow==1||i_diffRow==-1)&i_diffColumn==0)
             {
-                validMove = true;
+                validMove = true;//move up or down by 1
             }
-            else if((differenceColumn == 1 || differenceColumn == -1) && differenceRow == 0)
+            if ((i_diffColumn == 1 || i_diffColumn == -1) & i_diffRow == 0)
             {
-                validMove = true;
+                validMove = true;//move left or right by one
             }
-                return validMove;
+            return validMove;
         }
         internal King(Position i_Position, eColor i_Color) : base(i_Position, i_Color,0)
         {
@@ -66,11 +66,11 @@ namespace ChessProject.Classes
 
     internal class Queen : ChessPiece
     {
-
-        internal override bool CheckMove(Position i_newPosition)
+        
+        internal override bool CheckMove(Position i_newPosition,int i_diffRow, int i_diffColumn)
         {
-            return true;//the chess piece dont care about the size of the table or if the new
-                        //position is full or empty - single responsibility principle
+
+            return HelpingFunctions.IsDiagonal(i_diffRow, i_diffColumn) || HelpingFunctions.IsUpOrDown(i_diffRow, i_diffColumn);
         }
        internal Queen(Position i_Position, eColor i_Color) : base(i_Position, i_Color,9)
         {
@@ -83,23 +83,77 @@ namespace ChessProject.Classes
     internal class Rook : ChessPiece
     {
 
-        internal override bool CheckMove(Position i_newPosition)
+        internal override bool CheckMove(Position i_newPosition, int i_diffRow, int i_diffColumn)
         {
             bool validMove = false;
-            int differenceRow = this.m_Position.m_Row - i_newPosition.m_Row;
-            int differenceColumn = this.m_Position.m_Column - i_newPosition.m_Column;
-            //the rook is same as king but can move how many steps he wants
-            if ((differenceRow>= 1 || differenceRow <= -1) && differenceRow == 0)
-            {
-                validMove = true;
-            }
-            else if ((differenceColumn >=1 || differenceColumn <=1 -1) && differenceRow == 0)
-            {
-                validMove = true;
-            }
+            
+            validMove =  HelpingFunctions.IsUpOrDown(i_diffRow, i_diffColumn);
             return validMove;
         }
         internal Rook(Position i_Position, eColor i_Color) : base(i_Position, i_Color,5)
+        {
+
+        }
+
+
+    }
+    internal class Bishop : ChessPiece
+    {
+
+        internal override bool CheckMove(Position i_newPosition, int i_diffRow, int i_diffColumn)
+        {
+            bool validMove = false;
+
+            validMove = HelpingFunctions.IsDiagonal(i_diffRow, i_diffColumn);
+            return validMove;
+        }
+        internal Bishop(Position i_Position, eColor i_Color) : base(i_Position, i_Color, 5)
+        {
+
+        }
+
+
+    }
+
+    internal class Knight : ChessPiece
+    {
+
+        internal override bool CheckMove(Position i_newPosition, int i_diffRow, int i_diffColumn)
+        {
+            bool validMove = false;
+
+            validMove = HelpingFunctions.CheckKnightMove(i_diffRow, i_diffColumn);
+            return validMove;
+        }
+        internal Knight(Position i_Position, eColor i_Color) : base(i_Position, i_Color, 5)
+        {
+
+        }
+
+
+    }
+
+    internal class Pawn : ChessPiece
+    {
+
+        internal override bool CheckMove(Position i_newPosition, int i_diffRow, int i_diffColumn)
+        {
+            bool validMove = false;
+
+            if(i_diffRow==1 && i_diffColumn==0)
+            {
+                validMove =  true;//move up
+            }
+            else if (i_diffRow == 1 && i_diffColumn == 1)
+            {
+                validMove =  true;//move diagonal right
+            }
+            else if (i_diffRow == 1 && i_diffColumn == -1)
+                validMove = true; //mobe diagonal left
+            
+            return validMove;
+        }
+        internal Pawn(Position i_Position, eColor i_Color) : base(i_Position, i_Color, 5)
         {
 
         }
